@@ -3,7 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 import { getOasisClient, getUserAccount } from './oasis';
 import { publicKeyToAddress, uint2bigintString, uint2hex } from './lib/helpers';
-import { buildAddEscrow, getUserBalance, TW } from './api/helpers';
+import { buildAddEscrow, getStaked, getUserBalance, TW } from './api/helpers';
 
 import * as oasisExt from '@oasisprotocol/client-ext-utils';
 import { ExtContextSigner } from '@oasisprotocol/client-ext-utils/dist/signature';
@@ -23,10 +23,13 @@ function App() {
   const [chainContext, setChainContext] = useState<string | null>(null);
   const [sn, setSn] = useState(0);
   const [balance, setBalance] = useState('0');
-  useEffect(()=>{
-    if(!!signer)
-    publicKeyToAddress(signer.publicKey).then(address =>getUserBalance(nic, address).then(setBalance) )
-    
+  const [staked, setStaked] = useState('0');
+  useEffect(() => {
+    if (!!signer)
+      publicKeyToAddress(signer.publicKey).then(address => {
+        getUserBalance(nic, address).then(setBalance)
+        getStaked(nic, address).then(setStaked);
+      })
   }, [signer]);
   // let chainContext = await nic.consensusGetChainContext()
   // await addEscrow.sign(signer, chainContext)
@@ -87,7 +90,8 @@ function App() {
       <div>Network: {signer?.connection.origin}</div>
       <div>Your Address: {signer?.which ?? 'No PubKey'}</div>
       <div>Balance: {balance}</div>
-      <div>Ready: {ready ? "Yes": "No"}</div>
+      <div>Staked: {staked}</div>
+      <div>Ready: {ready ? "Yes" : "No"}</div>
       {/* <div>Tx: {!!tx && !!tx.signedTransaction ? uint2hex(tx.signedTransaction.signature.signature ?? new Uint8Array()) : 'No Sig'}</div> */}
       <div>Tx True: {!!tx ? 'Yes' : 'No'}</div>
       <div>Signed Tx True: {!!tx?.signedTransaction ? 'Yes' : 'No'}</div>
