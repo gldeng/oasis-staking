@@ -70,17 +70,26 @@ export async function getUserBalance(nic: OasisClient, address: string) {
   return '0';
 }
 
-export async function getStaked(nic: OasisClient, address: string) {
+export interface Staked {
+  validator: string;
+  amount: bigint;
+}
+
+export async function getStaked(nic: OasisClient, address: string): Promise<Staked[]> {
   let shortKey = await oasis.staking.addressFromBech32(address)
-  // oasisClient.getla()
   let height = 0;
   let stakedMap = await nic.stakingDelegationsFor({ height: height, owner: shortKey });
-  const reps = await Promise.all( Array.from(stakedMap.entries()).map(async ([k, v])=> {
+  const staked0 = Array.from(stakedMap.entries()).map(async ([k, v]) => {
+    const shortPK = await shortPublicKey(k);
     const validator = await publicKeyToAddress(k);
-    const amount = oasis.quantity.toBigInt(v.shares).toString()
-    return `${validator}: ${amount}`
-  }));
-  return reps.join('\n');
+    const amount = oasis.quantity.toBigInt(v.shares)
+    return {
+      validator,
+      amount,
+    } as Staked
+  });
+  const staked = await Promise.all(staked0);
+  return staked;
 }
 
 

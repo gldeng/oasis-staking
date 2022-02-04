@@ -1,7 +1,22 @@
 import { address, quantity } from '@oasisprotocol/client'
 
-export const uint2hex = (uint: Uint8Array) => Buffer.from(uint).toString('hex')
-export const hex2uint = (hex: string) => new Uint8Array(Buffer.from(hex, 'hex'))
+export const uint2hex = (uint: Uint8Array) => Array.from(uint).map(i => ('0' + i.toString(16)).slice(-2)).join('');
+export function hex2uint(hexString: string) {
+  if (hexString.length % 2 !== 0) {
+    throw "Invalid hexString";
+  }
+  var arrayBuffer = new Uint8Array(hexString.length / 2);
+
+  for (var i = 0; i < hexString.length; i += 2) {
+    var byteValue = parseInt(hexString.substr(i, 2), 16);
+    if (isNaN(byteValue)) {
+      throw "Invalid hexString";
+    }
+    arrayBuffer[i / 2] = byteValue;
+  }
+
+  return arrayBuffer;
+}
 
 export const shortPublicKey = async (publicKey: Uint8Array) => {
   return await address.fromData('oasis-core/address: staking', 0, publicKey)
