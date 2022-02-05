@@ -60,13 +60,15 @@ function Stake({ chainContext, conn, nic, signer, address }: StakeProps) {
   useEffect(() => {
     getUserBalance(nic, address).then(setBalance);
   });
-  useEffect(() => {
-    if (!!tx)
-      tx.sign(signer, chainContext).then(() => {
-        setSn(sn + 1);
-      });
-  }, [tx]);
-  const prepare = () => buildAddEscrow(nic, signer, TESTNET_VALIDATOR, BigInt(AMOUNT_TO_STAKE)).then(setTx);
+  const prepare = () => {
+    const inner = async () => {
+      const tx_ = await buildAddEscrow(nic, signer, TESTNET_VALIDATOR, BigInt(AMOUNT_TO_STAKE));
+      await tx_.sign(signer, chainContext);
+      setSn(sn + 1);
+      setTx(tx_);
+    }
+    inner();
+  }
   const send = () => {
     !!tx && !!tx.signedTransaction && tx.submit(nic);
   };

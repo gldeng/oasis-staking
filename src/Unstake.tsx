@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { getOasisClient, getUserAccount } from './oasis';
+import { useEffect, useState } from 'react';
 import { publicKeyToAddress, uint2bigintString, uint2hex } from './lib/helpers';
-import { buildAddEscrow, buildReclaimEscrow, getStaked, getUserBalance, Staked, TW, TxUnstaking } from './api/helpers';
+import { buildReclaimEscrow, getStaked, Staked, TxUnstaking } from './api/helpers';
 import { ExtContextSigner } from '@oasisprotocol/client-ext-utils/dist/signature';
 import { ExtConnection } from '@oasisprotocol/client-ext-utils/dist/connection';
-import { StakingEscrow, StakingReclaimEscrow } from '@oasisprotocol/client/dist/types';
-import { AMOUNT_TO_STAKE, AMOUNT_TO_UNSTAKE, TESTNET_VALIDATOR } from './config';
+import { StakingReclaimEscrow } from '@oasisprotocol/client/dist/types';
+import { AMOUNT_TO_UNSTAKE, TESTNET_VALIDATOR } from './config';
 import { NodeInternal } from '@oasisprotocol/client/dist/client';
 
 export interface UnstakeProps {
@@ -61,16 +60,15 @@ function Unstake({ chainContext, conn, nic, signer, address }: UnstakeProps) {
   useEffect(() => {
     getStaked(nic, address).then(setStaked);
   });
-  useEffect(() => {
-    if (!!tx){
-      tx.sign(signer, chainContext).then(() => {
-        setSn(sn + 1);
-      });
-      console.log('tx un', tx)
+  const prepare = () => {
+    const inner = async () => {
+      const tx_ = await buildReclaimEscrow(nic, signer, TESTNET_VALIDATOR, BigInt(AMOUNT_TO_UNSTAKE));
+      await tx_.sign(signer, chainContext);
+      setSn(sn + 1);
+      setTx(tx_);
     }
-      
-  }, [tx]);
-  const prepare = () => buildReclaimEscrow(nic, signer, TESTNET_VALIDATOR, BigInt(AMOUNT_TO_UNSTAKE)).then(setTx);
+    inner();
+  }
   const send = () => {
     !!tx && !!tx.signedTransaction && tx.submit(nic);
   };
@@ -78,8 +76,8 @@ function Unstake({ chainContext, conn, nic, signer, address }: UnstakeProps) {
     <div>
       <h2>Unstake</h2>
       {
-        !!staked && staked.length> 0 && staked.map(
-          (s)=>
+        !!staked && staked.length > 0 && staked.map(
+          (s) =>
             <div>Staked to {s.validator}: {s.amount.toString()}</div>
         )
       }
