@@ -63,7 +63,12 @@ function Unstake({ chainContext, conn, nic, signer, address }: UnstakeProps) {
   const prepare = () => {
     const inner = async () => {
       const tx_ = await buildReclaimEscrow(nic, signer, TESTNET_VALIDATOR, BigInt(AMOUNT_TO_UNSTAKE));
-      await tx_.sign(signer, chainContext);
+      try {
+        await tx_.sign(signer, chainContext);
+      } catch (err) {
+        console.error(err);
+      }
+
       setSn(sn + 1);
       setTx(tx_);
     }
